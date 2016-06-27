@@ -1,4 +1,7 @@
 defmodule GitterBoard.GitterChannel do
+  @moduledoc """
+    Channel to handle all Gitter chat messages
+  """
   use Phoenix.Channel
 
   @topic "gitter"

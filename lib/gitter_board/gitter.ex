@@ -1,5 +1,10 @@
 defmodule GitterBoard.Gitter do
+  @moduledoc """
+    Gitter API client loading first the last n messages from the RESTful API
+    and then starts listening to the Streaming API
+  """
   use GenServer
+  alias GitterBoard.GitterChannel
 
   @rest_api "api.gitter.im"
   @stream_api "stream.gitter.im"
@@ -21,7 +26,7 @@ defmodule GitterBoard.Gitter do
 
   def handle_cast(:listen, _) do
     messages = fetch
-    broadcast! messages
+    GitterChannel.broadcast! messages
     do_listen
     {:noreply, messages}
   end
@@ -31,15 +36,14 @@ defmodule GitterBoard.Gitter do
   end
 
   def handle_info(%HTTPoison.AsyncChunk{chunk: chunk}, state) do
-    cond do
-      String.match?(chunk, ~r/\{.*\}/) ->
-        message  = chunk |> Poison.decode!
-        messages = [message | state] |> Enum.take(config[:limit])
-        broadcast! messages
-        {:noreply, messages}
-      true ->
-        # ignore all whitespace and other nonsense
-        {:noreply, state}
+    if String.match?(chunk, ~r/\{.*\}/) do
+      message  = chunk |> Poison.decode!
+      messages = [message | state] |> Enum.take(config[:limit])
+      GitterChannel.broadcast! messages
+      {:noreply, messages}
+    else
+      # ignore all whitespace and other nonsense
+      {:noreply, state}
     end
   end
 
@@ -60,10 +64,6 @@ defmodule GitterBoard.Gitter do
   defp fetch do
     {:ok, %{status_code: 200, body: body}} = HTTPoison.get(url, headers)
     body |> Poison.decode! |> Enum.reverse
-  end
-
-  defp broadcast!(messages) do
-    GitterBoard.GitterChannel.broadcast!(messages)
   end
 
   defp config do

@@ -1,4 +1,8 @@
 defmodule GitterBoard do
+  @moduledoc """
+    Webapplication to display the last n chat messages from a
+    Gitter chat room
+  """
   use Application
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
