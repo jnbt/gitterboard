@@ -2,7 +2,7 @@ defmodule GitterBoard.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "room:*", GitterBoard.RoomChannel
+  channel "gitter", GitterBoard.GitterChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

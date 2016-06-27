@@ -16,7 +16,7 @@ defmodule GitterBoard.Gitter do
 
   def handle_cast(:listen, _) do
     messages = fetch
-    push_messages! messages
+    broadcast! messages
     do_listen
     {:noreply, messages}
   end
@@ -26,7 +26,7 @@ defmodule GitterBoard.Gitter do
       String.match?(chunk, ~r/\{.*\}/) ->
         message  = chunk |> Poison.decode!
         messages = [message | state] |> Enum.take(config[:limit])
-        push_messages! messages
+        broadcast! messages
         {:noreply, messages}
       true ->
         # ignore all whitespace and other nonsense
@@ -53,8 +53,8 @@ defmodule GitterBoard.Gitter do
     body |> Poison.decode! |> Enum.reverse
   end
 
-  defp push_messages!(messages) do
-    IO.inspect messages
+  defp broadcast!(messages) do
+    GitterBoard.GitterChannel.broadcast!(messages)
   end
 
   defp config do
