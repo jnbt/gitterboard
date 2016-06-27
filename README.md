@@ -1,5 +1,7 @@
 # GitterBoard
 
+[![Join the chat at https://gitter.im/jnbt/gitterboard](https://badges.gitter.im/jnbt/gitterboard.svg)](https://gitter.im/jnbt/gitterboard?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Install
 
 To install this app:
