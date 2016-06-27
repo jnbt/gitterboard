@@ -2,6 +2,7 @@ defmodule GitterBoard.Gitter do
   use GenServer
 
   @rest_api "api.gitter.im"
+  @stream_api "stream.gitter.im"
 
   def start_link do
     {:ok, pid} = GenServer.start_link(__MODULE__, :ok)
@@ -16,7 +17,35 @@ defmodule GitterBoard.Gitter do
   def handle_cast(:listen, _) do
     messages = fetch
     push_messages! messages
+    do_listen
     {:noreply, messages}
+  end
+
+  def handle_info(%HTTPoison.AsyncChunk{chunk: chunk}, state) do
+    cond do
+      String.match?(chunk, ~r/\{.*\}/) ->
+        message  = chunk |> Poison.decode!
+        messages = [message | state] |> Enum.take(config[:limit])
+        push_messages! messages
+        {:noreply, messages}
+      true ->
+        # ignore all whitespace and other nonsense
+        {:noreply, state}
+    end
+  end
+
+  def handle_info(%HTTPoison.AsyncEnd{}, state) do
+    # in this case something went wrong, so lets crash
+    {:stop, "Stream ended", state}
+  end
+
+  def handle_info(request, state) do
+    super(request, state)
+  end
+
+  defp do_listen do
+    HTTPoison.start
+    HTTPoison.get! url(@stream_api), headers, [stream_to: self, recv_timeout: :infinity]
   end
 
   defp fetch do
