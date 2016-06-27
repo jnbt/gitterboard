@@ -3,9 +3,10 @@ defmodule GitterBoard.Gitter do
 
   @rest_api "api.gitter.im"
   @stream_api "stream.gitter.im"
+  @name __MODULE__
 
   def start_link do
-    {:ok, pid} = GenServer.start_link(__MODULE__, :ok)
+    {:ok, pid} = GenServer.start_link(__MODULE__, :ok, name: @name)
     GenServer.cast(pid, :listen)
     {:ok, pid}
   end
@@ -14,11 +15,19 @@ defmodule GitterBoard.Gitter do
     {:ok, []}
   end
 
+  def replay do
+    {:ok, GenServer.call(@name, :replay)}
+  end
+
   def handle_cast(:listen, _) do
     messages = fetch
     broadcast! messages
     do_listen
     {:noreply, messages}
+  end
+
+  def handle_call(:replay, _from, state) do
+    {:reply, state, state}
   end
 
   def handle_info(%HTTPoison.AsyncChunk{chunk: chunk}, state) do

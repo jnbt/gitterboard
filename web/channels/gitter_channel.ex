@@ -4,6 +4,7 @@ defmodule GitterBoard.GitterChannel do
   @topic "gitter"
 
   def join(@topic, _, socket) do
+    send(self, :after_join)
     {:ok, socket}
   end
 
@@ -11,5 +12,11 @@ defmodule GitterBoard.GitterChannel do
     GitterBoard.Endpoint.broadcast!(@topic, "update", %{
       messages: messages
     })
+  end
+
+  def handle_info(:after_join, socket) do
+    {:ok, messages} = GitterBoard.Gitter.replay
+    push socket, "update", %{messages: messages}
+    {:noreply, socket}
   end
 end
